@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>For You</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- Romantic fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* --- RESET & BACKGROUND --- */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      /* Deep romantic twilight gradient */
+      background: radial-gradient(circle at 50% 30%, #4a1228 0%, #1a0812 60%, #000000 100%);
+      font-family: 'Cinzel', serif;
+      color: #fff;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* --- CLICK OVERLAY (Fix for Autoplay) --- */
+    #start-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: opacity 0.8s ease;
+    }
+
+    #start-overlay h2 {
+      font-family: 'Great Vibes', cursive;
+      font-size: 3rem;
+      color: #ffb6c1;
+      text-shadow: 0 0 20px rgba(255, 182, 193, 0.8);
+      animation: pulse 2s infinite;
+      pointer-events: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+
+    /* --- MUSIC CONTROL --- */
+    #music-control {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      opacity: 0; /* Hidden until enter */
+      transition: opacity 1s;
+    }
+
+    #music-control svg {
+      width: 20px;
+      height: 20px;
+      fill: #ffb6c1;
+    }
+
+    /* --- MESSAGE SECTION (Top 50%) --- */
+    .message-area {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50vh; 
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      text-align: center;
+      padding: 2rem;
+      opacity: 0; /* Starts hidden */
+      transition: opacity 2s ease-in;
+    }
+
+    .message-area.visible {
+      opacity: 1;
+    }
+
+    .message-area h1 {
+      font-family: 'Great Vibes', cursive;
+      font-size: clamp(3rem, 7vw, 5.5rem);
+      background: linear-gradient(to right, #ffb6c1, #ff69b4, #ffb6c1);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 0.5rem;
+      filter: drop-shadow(0 0 10px rgba(255, 105, 180, 0.5));
+    }
+
+    .message-area p {
+      font-size: 1.1rem;
+      letter-spacing: 0.15em;
+      color: rgba(255, 220, 235, 0.8);
+      text-transform: uppercase;
+      max-width: 600px;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    /* --- BUTTON STYLING --- */
+    .read-btn {
+      padding: 12px 30px;
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 182, 193, 0.5);
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .read-btn:hover {
+      background: rgba(255, 182, 193, 0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 105, 180, 0.4);
+    }
+
+    /* --- POPUP MODAL --- */
+    #msg-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    #msg-modal.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, #2a0e1e, #1a0812);
+      padding: 3rem 2rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 182, 193, 0.3);
+      max-width: 90%;
+      width: 500px;
+      text-align: center;
+      position: relative;
+      transform: scale(0.9);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    #msg-modal.show .modal-content {
+      transform: scale(1);
+    }
+
+    .modal-content h3 {
+      font-family: 'Great Vibes', cursive;
+      font-size: 2.5rem;
+      color: #ffb6c1;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-content p {
+      font-family: 'Cinzel', serif; /* or use sans-serif for readability */
+      font-size: 1rem;
+      line-height: 1.8;
+      color: #fce4ec;
+      margin-bottom: 2rem;
+      white-space: pre-line; /* Allows newlines in HTML text */
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      font-size: 1.5rem;
+      color: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+    .close-btn:hover { color: #fff; }
+
+    /* --- GARDEN SECTION (Bottom 50%) --- */
+    .garden {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 50vh; 
+      display: flex;
+      justify-content: center; 
+      align-items: flex-end;   
+      gap: 2vw;                
+      padding-bottom: 0;
+      z-index: 1;
+      opacity: 0; /* Starts hidden */
+      transition: opacity 3s ease-in;
+    }
+
+    .garden.visible {
+      opacity: 1;
+    }
+
+    /* --- FLOWER COMPONENT --- */
+    .flower {
+      --flower-size: 100px;
+      --stem-height: 100%; 
+      --hue: 340;          
+      position: relative;
+      width: var(--flower-size);
+      height: var(--stem-height);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      transform-origin: bottom center;
+      animation: sway 5s ease-in-out infinite alternate;
+    }
+
+    .stem {
+      width: 6px;
+      flex-grow: 1; 
+      background: linear-gradient(to right, #0d3814, #1f6b2e, #0d3814);
+      border-radius: 4px;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.6);
+      position: relative;
+      z-index: 0;
+      margin-top: -10px;
+    }
+
+    .leaf {
+      position: absolute;
+      width: 30px;
+      height: 16px;
+      background: linear-gradient(135deg, #1f6b2e, #0f3d1a);
+      border-radius: 2px 30px 2px 30px;
+      box-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+    }
+    .leaf.left { left: -30px; top: 40%; transform: rotate(-15deg); }
+    .leaf.right { right: -30px; top: 60%; transform: rotate(195deg); }
+
+    .head {
+      width: var(--flower-size);
+      height: var(--flower-size);
+      position: relative;
+      z-index: 2;
+      filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
+    }
+
+    .center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 22%;
+      height: 22%;
+      background: radial-gradient(circle at 30% 30%, #ffe082, #ffb300, #ff6f00);
+      border-radius: 50%;
+      z-index: 10;
+      box-shadow: inset -1px -1px 2px rgba(0,0,0,0.3);
+    }
+
+    .petals-outer, .petals-inner {
+      position: absolute;
+      inset: 0;
+    }
+
+    .petal {
+      position: absolute;
+      width: 50%;
+      height: 50%;
+      left: 50%;
+      bottom: 50%;
+      transform-origin: 0% 100%;
+      background: radial-gradient(circle at 10% 10%, 
+        hsl(var(--hue), 90%, 90%) 0%, 
+        hsl(var(--hue), 80%, 60%) 40%, 
+        hsl(var(--hue), 90%, 30%) 100%
+      );
+      border-radius: 50% 50% 5px 50%;
+      box-shadow: -1px -1px 3px rgba(0,0,0,0.2);
+    }
+
+    .petals-inner { transform: scale(0.6) rotate(30deg); z-index: 5; }
+    .petals-inner .petal {
+      background: radial-gradient(circle at 10% 10%, 
+        hsl(var(--hue), 80%, 75%) 0%, 
+        hsl(var(--hue), 90%, 40%) 100%
+      );
+    }
+
+    .petal:nth-child(1) { transform: rotate(0deg); }
+    .petal:nth-child(2) { transform: rotate(60deg); }
+    .petal:nth-child(3) { transform: rotate(120deg); }
+    .petal:nth-child(4) { transform: rotate(180deg); }
+    .petal:nth-child(5) { transform: rotate(240deg); }
+    .petal:nth-child(6) { transform: rotate(300deg); }
+
+    /* --- RAIN --- */
+    .rain-container {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .petal-rain {
+      position: absolute;
+      top: -20px;
+      width: 12px;
+      height: 12px;
+      background: linear-gradient(to bottom right, #ffc0cb, #ff69b4);
+      border-radius: 100% 0 100% 0;
+      opacity: 0;
+      animation: fall linear infinite;
+    }
+
+    @keyframes sway {
+      0% { transform: rotate(-2deg); }
+      100% { transform: rotate(2deg); }
+    }
+    
+    @keyframes fall {
+      0% { top: -5vh; opacity: 0; transform: translateX(0) rotate(0deg); }
+      10% { opacity: 0.9; }
+      100% { top: 105vh; opacity: 0; transform: translateX(30px) rotate(360deg); }
+    }
+
+    @media (max-width: 600px) {
+      .message-area h1 { font-size: 3.5rem; }
+      .garden { gap: -5px; }
+      .flower { --flower-size: 85px !important; }
+      .modal-content { width: 85%; padding: 2rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. OVERLAY TO START MUSIC -->
+  <div id="start-overlay">
+    <h2>Click to Enter...</h2>
+  </div>
+
+  <!-- 2. AUDIO ELEMENT -->
+  <!-- IMPORTANT: Put 'music.mp3' in the same folder -->
+  <audio id="bg-music" loop>
+    <source src="music.mp3" type="audio/mpeg">
+    <source src="music.wav" type="audio/wav">
+    Your browser does not support audio.
+  </audio>
+
+  <!-- 3. MUTE BUTTON -->
+  <div id="music-control" title="Toggle Music">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+    </svg>
+  </div>
+
+  <!-- 4. PAGE CONTENT (Message + Button) -->
+  <div class="message-area" id="main-content">
+    <h1>Arya</h1>
+    <p>Like a garden that blooms forever,<br>my heart grows only for you.</p>
+    
+    <!-- NEW BUTTON -->
+    <button class="read-btn" id="open-modal-btn">Read Message</button>
+  </div>
+
+  <!-- 5. POPUP MODAL (Hidden by default) -->
+  <div id="msg-modal">
+    <div class="modal-content">
+      <span class="close-btn" id="close-modal-btn">&times;</span>
+      <h3>My Dearest Arya,</h3>
+      <p>
+        You are the sunshine that makes my world bloom. 
+        I wanted to create something that lasts forever, just like my love for you.
+        Ee page ivide indavum tto, Everytime I want to send you a special message athokke njn ivide type aaki aayrkum ayakka.
+        Ravile aanu ithu vaayikunenkil Good Morning, Travelling karyam and baaki works onnum alojichu tension aavenda tto ellam sort aavum sett aavum.
+        I Love You. 
+        You are the cutest, sweetest and the most beautiful soul I know.
+      </p>
+      <p style="font-size: 0.9rem; opacity: 0.8;">~ Forever Yours</p>
+    </div>
+  </div>
+
+  <!-- 6. RAIN -->
+  <div class="rain-container">
+    <div class="petal-rain" style="left: 10%; animation-duration: 10s; animation-delay: 0s;"></div>
+    <div class="petal-rain" style="left: 20%; animation-duration: 14s; animation-delay: 2s;"></div>
+    <div class="petal-rain" style="left: 50%; animation-duration: 12s; animation-delay: 4s;"></div>
+    <div class="petal-rain" style="left: 80%; animation-duration: 9s; animation-delay: 1s;"></div>
+    <div class="petal-rain" style="left: 30%; animation-duration: 11s; animation-delay: 6s;"></div>
+    <div class="petal-rain" style="left: 60%; animation-duration: 13s; animation-delay: 3s;"></div>
+    <div class="petal-rain" style="left: 90%; animation-duration: 15s; animation-delay: 5s;"></div>
+  </div>
+
+  <!-- 7. GARDEN -->
+  <div class="garden" id="garden-content">
+    <!-- Far Left -->
+    <div class="flower" style="--hue: 330; --flower-size: 90px; --stem-height: 70%; animation-delay: 0s;">
+      <div class="head">
+        <div class="petals-outer"><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div></div>
+        <div class="petals-inner"><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div></div>
+        <div class="center"></div>
+      </div>
+      <div class="stem"><div class="leaf left"></div></div>
+    </div>
+    <!-- Mid Left -->
+    <div class="flower" style="--hue: 350; --flower-size: 110px; --stem-height: 85%; animation-delay: -1s;">
+      <div class="head">
+        <div class="petals-outer"><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div></div>
+        <div class="petals-inner"><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div></div>
+        <div class="center"></div>
+      </div>
+      <div class="stem"><div class="leaf right"></div></div>
+    </div>
+    <!-- Center Left -->
+    <div class="flower" style="--hue: 260; --flower-size: 130px; --stem-height: 95%; animation-delay: -2s; z-index: 5;">
+      <div class="head">
+        <div class="petals-outer"><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div></div>
+        <div class="petals-inner"><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div></div>
+        <div class="center"></div>
+      </div>
+      <div class="stem"><div class="leaf left"></div><div class="leaf right" style="top:70%"></div></div>
+    </div>
+    <!-- Center Right -->
+    <div class="flower" style="--hue: 340; --flower-size: 125px; --stem-height: 90%; animation-delay: -1.5s; z-index: 4;">
+      <div class="head">
+        <div class="petals-outer"><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div></div>
+        <div class="petals-inner"><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div></div>
+        <div class="center"></div>
+      </div>
+      <div class="stem"><div class="leaf left"></div></div>
+    </div>
+    <!-- Mid Right -->
+    <div class="flower" style="--hue: 10; --flower-size: 105px; --stem-height: 80%; animation-delay: -0.5s;">
+      <div class="head">
+        <div class="petals-outer"><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div></div>
+        <div class="petals-inner"><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div></div>
+        <div class="center"></div>
+      </div>
+      <div class="stem"><div class="leaf right"></div></div>
+    </div>
+    <!-- Far Right -->
+    <div class="flower" style="--hue: 290; --flower-size: 95px; --stem-height: 75%; animation-delay: -2.5s;">
+      <div class="head">
+        <div class="petals-outer"><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div></div>
+        <div class="petals-inner"><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div></div>
+        <div class="center"></div>
+      </div>
+      <div class="stem"><div class="leaf left"></div></div>
+    </div>
+  </div>
+
+  <script>
+    const overlay = document.getElementById('start-overlay');
+    const music = document.getElementById('bg-music');
+    const mainContent = document.getElementById('main-content');
+    const gardenContent = document.getElementById('garden-content');
+    const musicControl = document.getElementById('music-control');
+    
+    // Modal Elements
+    const openModalBtn = document.getElementById('open-modal-btn');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const modal = document.getElementById('msg-modal');
+
+    // Music Volume
+    music.volume = 0.5;
+
+    // 1. Enter Site
+    overlay.addEventListener('click', () => {
+      music.play().catch(err => {
+        console.log("Music failed. Check file name 'music.mp3'", err);
+      });
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        mainContent.classList.add('visible');
+        gardenContent.classList.add('visible');
+        musicControl.style.opacity = '1';
+      }, 800);
+    });
+
+    // 2. Music Toggle
+    musicControl.addEventListener('click', () => {
+      if (music.paused) {
+        music.play();
+        musicControl.style.opacity = '1';
+      } else {
+        music.pause();
+        musicControl.style.opacity = '0.5';
+      }
+    });
+
+    // 3. Modal Logic
+    openModalBtn.addEventListener('click', () => {
+      modal.classList.add('show');
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+      modal.classList.remove('show');
+    });
+
+    // Close modal if clicking outside the box
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>
+    
